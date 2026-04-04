@@ -1,10 +1,13 @@
 // ============================================
-// Names:       Xavier Le, Gabe Gordon
-// Course:      CS370-01Y | Spring 2026
-// Project:     NetTicTacToe - Server
-// Description: Accepts 2 client connections and manages game state, 
-//              turn order, and win detection for an online Tic-Tac-Toe game.
-// Due Date:    April 7, 2026
+// Names:           Xavier Le, Gabe Gordon
+// Course:          CS370-01Y | Spring 2026
+// Project:         NetTicTacToe - Server
+// Description:     Accepts 2 client connections and manages game state, 
+//                  turn order, and win detection for an online Tic-Tac-Toe game.
+//
+// Instructions:    Compile file with 'g++ -o server server.cpp -lws2_32' and 
+//                  then run './server' before compiling and running the client
+// Due Date:        April 7, 2026
 // ============================================
 
 #include <iostream>
@@ -97,17 +100,46 @@ int main(){
     listen(ListenSocket, 2);
 
 
-    SOCKET ClientSocket1 = accept(ListenSocket, nullptr, nullptr);
+    SOCKET client1 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 1 connected"<<endl;
-    sendMsg(ClientSocket1, "Welcome Player 1");
+    sendMsg(client1, "WELCOME 1");
 
-    SOCKET ClientSocket2 = accept(ListenSocket, nullptr, nullptr);
+    SOCKET client2 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 2 connected"<<endl;
-    sendMsg(ClientSocket2, "Welcome Player 2");
+    sendMsg(client2, "WELCOME 2");
+
+    SOCKET clients[2] = {client1, client2};
+    char symbols[2] = {'X', 'O'};
+
+    initBoard();
+    sendMsg(client1, "BOARD " + boardToString());
+    sendMsg(client2, "BOARD " + boardToString());
 
     int turn = 0;
     while(true){
+        SOCKET current = clients[turn];
+        SOCKET waiting = clients[1 - turn];
 
+        sendMsg(current, "YOUR_TURN");
+        sendMsg(waiting, "WAITING");
+
+        string msg = receiveMsg(current);
+        if(msg.empty()){
+            cout<<"Player disconected"<<endl;
+            break;
+        }
+
+        int pos = -1;
+        if(msg.substr(0,5) == "MOVE"){
+            pos=stoi(msg.substr(5));
+        }
+
+        if(!isValidMove(pos)){
+            sendMsg(current, "INVALID");
+            continue;
+        }
+
+        applyMove(pos, symbols[turn]);
 
     }
 

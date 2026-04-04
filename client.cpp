@@ -1,10 +1,13 @@
 // ============================================
-// Names:       Xavier Le, Gabe Gordon
-// Course:      CS370-01Y | Spring 2026
-// Project:     NetTicTacToe - Client
-// Description: Connects to the server, displays the board, and 
-//              handles player input for a networked Tic-Tac-Toe game.
-// Due Date:    April 7, 2026
+// Names:           Xavier Le, Gabe Gordon
+// Course:          CS370-01Y | Spring 2026
+// Project:         NetTicTacToe - Client
+// Description:     Connects to the server, displays the board, and 
+//                  handles player input for a networked Tic-Tac-Toe game.
+//
+// Instructions:    Compile file with 'g++ -o client client.cpp -lws2_32'
+//                  and then run './client' after compiling running the server.
+// Due Date:        April 7, 2026
 // ============================================
 
 #include <iostream>
@@ -85,13 +88,47 @@ int main(){
             break;
         }
 
-        if(msg.substr(0,7)=="Welcome"){
-            mySymbol = msg[15]=='1'?'X':'O';
-            cout<<"You are player "<<msg[15];
+        if(msg.substr(0,7) == "WELCOME"){
+            mySymbol = msg[8]=='1'?'X':'O';
+            cout<<"You are player "<<msg[8];
             cout<<" ("<<mySymbol<<")"<<endl;
         }
 
-        
+        else if(msg.substr(0, 5) == "BOARD"){
+            string state = msg.substr(7, 16);
+            for(int i=0;i<9;i++){
+                board[i]=state[i];
+            }
+            printBoard();
+        }
+
+        else if(msg.substr(0, 9) == "YOUR_TURN"){
+            int pos = -1;
+            while(true){
+                cout<<"Your move (0-8): ";
+                cin>>pos;
+                if(pos>=0 || pos<=8)break; 
+                cout<<"Invalid input. Enter a number 0-8.\n";
+            }
+            sendMsg(sock, "MOVE " + pos);
+        }
+
+        else if(msg == "INVALID"){
+            cout<<"That square is taken! Try again."<<endl;
+        }
+
+        else if(msg == "WAITING"){
+            cout<<"Waiting for opponent's turn."<<endl;
+        }
+
+        else if(msg.substr(0,6) == "RESULT"){
+            if(msg=="RESULT DRAW") cout<<"Draw!"<<endl; 
+            else{
+                char winner = msg[11];
+                if(winner == mySymbol)cout<<"YOU WON!"<<endl;
+                else cout<<"YOU LOST!"<<endl;
+            }
+        }
     }
 
     return 0;   
