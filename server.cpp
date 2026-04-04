@@ -55,6 +55,21 @@ string receiveMsg(SOCKET sock){
     return string(buf, bytes);
 }
 
+char gameWon(){
+    int winConditions[8][3] = {{0,1,2}, {3,4,5}, {6,7,8}, {0,3,6}, {1,4,7}, {2,5,8}, {0,4,8}, {6,4,2}};
+
+    for(auto w : winConditions){
+        if(board[w[0]] != ' ' &&
+        board[w[0]] == board[w[1]] &&
+        board[w[1]] == board[w[2]])return board[w[0]];
+    }
+
+    for(int i=0;i<9;i++){
+        if(board[i] == ' ')return 'C';
+    }
+
+    return 'D';
+}
 
 int main(){
     // initializes WinSock
@@ -89,6 +104,12 @@ int main(){
     SOCKET ClientSocket2 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 2 connected"<<endl;
     sendMsg(ClientSocket2, "Welcome Player 2");
+
+    int turn = 0;
+    while(true){
+
+
+    }
 
     return 0;
 }

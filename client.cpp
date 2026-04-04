@@ -86,10 +86,12 @@ int main(){
         }
 
         if(msg.substr(0,7)=="Welcome"){
-            mySymbol = msg[15];
-            cout<<"You are player "<<mySymbol;
-            cout<<" ("<<(mySymbol == '1'?"X":"O")<<")"<<endl;
+            mySymbol = msg[15]=='1'?'X':'O';
+            cout<<"You are player "<<msg[15];
+            cout<<" ("<<mySymbol<<")"<<endl;
         }
+
+        
     }
 
     return 0;   
