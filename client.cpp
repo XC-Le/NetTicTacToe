@@ -36,6 +36,19 @@ void printBoard() {
     cout << "\n\n";
 }
 
+// sends a message to client based off sock
+void sendMsg(SOCKET sock, const string& msg){
+    send(sock, msg.c_str(), (int) msg.size(), 0);
+}
+
+// receives a message from sock
+string receiveMsg(SOCKET sock){
+    char buf[BUFFER_SIZE] = {0};
+    int bytes = recv(sock, buf, BUFFER_SIZE-1, 0);
+    if(bytes <= 0) return "";
+    return string(buf, bytes);
+}
+
 int main(){
 
     WSADATA wsaData;
@@ -65,5 +78,19 @@ int main(){
     std::cout << "Connected to server!\n";
 
     
+    while(true){
+        string msg = receiveMsg(sock);
+        if(msg.empty()){
+            cout<<"Server disconected"<<endl;
+            break;
+        }
+
+        if(msg.substr(0,7)=="Welcome"){
+            mySymbol = msg[15];
+            cout<<"You are player "<<mySymbol;
+            cout<<" ("<<(mySymbol == '1'?"X":"O")<<")"<<endl;
+        }
+    }
+
     return 0;   
 }

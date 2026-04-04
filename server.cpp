@@ -43,7 +43,7 @@ void applyMove(int pos, char symbol){
 }
 
 // sends a message to client based off sock
-void sendMsg(SOCKET sock, string& msg){
+void sendMsg(SOCKET sock, const string& msg){
     send(sock, msg.c_str(), (int) msg.size(), 0);
 }
 
@@ -83,13 +83,12 @@ int main(){
 
 
     SOCKET ClientSocket1 = accept(ListenSocket, nullptr, nullptr);
+    cout<<"Player 1 connected"<<endl;
+    sendMsg(ClientSocket1, "Welcome Player 1");
 
     SOCKET ClientSocket2 = accept(ListenSocket, nullptr, nullptr);
-
+    cout<<"Player 2 connected"<<endl;
+    sendMsg(ClientSocket2, "Welcome Player 2");
 
     return 0;
 }
-
-// determine player 1
-
-// determine player 2
