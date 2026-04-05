@@ -29,8 +29,8 @@ void printBoard() {
     cout << "\n";
     for (int i = 0; i < 9; i++) {
         char c = board[i];
-        if (c == '1') cout << " X ";
-        else if (c == '2') cout << " O ";
+        if (c == 'X') cout << " X ";
+        else if (c == 'O') cout << " O ";
         else cout << " " << i << " "; 
 
         if (i % 3 != 2) cout << "|";
@@ -89,13 +89,13 @@ int main(){
         }
 
         if(msg.substr(0,7) == "WELCOME"){
-            mySymbol = msg[8]=='1'?'X':'O';
-            cout<<"You are player "<<msg[8];
+            mySymbol = msg[8];
+            cout<<"You are player "<<(msg[8]=='X'?'1':'2');
             cout<<" ("<<mySymbol<<")"<<endl;
         }
 
         else if(msg.substr(0, 5) == "BOARD"){
-            string state = msg.substr(7, 16);
+            string state = msg.substr(6,15);
             for(int i=0;i<9;i++){
                 board[i]=state[i];
             }
@@ -110,7 +110,7 @@ int main(){
                 if(pos>=0 || pos<=8)break; 
                 cout<<"Invalid input. Enter a number 0-8.\n";
             }
-            sendMsg(sock, "MOVE " + pos);
+            sendMsg(sock, "MOVE " + to_string(pos));
         }
 
         else if(msg == "INVALID"){
@@ -128,8 +128,11 @@ int main(){
                 if(winner == mySymbol)cout<<"YOU WON!"<<endl;
                 else cout<<"YOU LOST!"<<endl;
             }
+            break;
         }
     }
 
+    closesocket(sock);
+    WSACleanup();
     return 0;   
 }

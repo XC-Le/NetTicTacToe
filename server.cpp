@@ -58,17 +58,18 @@ string receiveMsg(SOCKET sock){
     return string(buf, bytes);
 }
 
-char gameWon(){
+char checkGameWon(){
     int winConditions[8][3] = {{0,1,2}, {3,4,5}, {6,7,8}, {0,3,6}, {1,4,7}, {2,5,8}, {0,4,8}, {6,4,2}};
 
-    for(auto w : winConditions){
+    for(auto& w : winConditions){
         if(board[w[0]] != ' ' &&
         board[w[0]] == board[w[1]] &&
-        board[w[1]] == board[w[2]])return board[w[0]];
+        board[w[1]] == board[w[2]])
+        return board[w[0]];
     }
 
     for(int i=0;i<9;i++){
-        if(board[i] == ' ')return 'C';
+        if(board[i] == ' ')return '\0';
     }
 
     return 'D';
@@ -102,11 +103,11 @@ int main(){
 
     SOCKET client1 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 1 connected"<<endl;
-    sendMsg(client1, "WELCOME 1");
+    sendMsg(client1, "WELCOME X");
 
     SOCKET client2 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 2 connected"<<endl;
-    sendMsg(client2, "WELCOME 2");
+    sendMsg(client2, "WELCOME O");
 
     SOCKET clients[2] = {client1, client2};
     char symbols[2] = {'X', 'O'};
@@ -115,10 +116,10 @@ int main(){
     sendMsg(client1, "BOARD " + boardToString());
     sendMsg(client2, "BOARD " + boardToString());
 
-    int turn = 0;
+    bool turn = true;
     while(true){
-        SOCKET current = clients[turn];
-        SOCKET waiting = clients[1 - turn];
+        SOCKET current = clients[turn?0:1];
+        SOCKET waiting = clients[turn?1:0];
 
         sendMsg(current, "YOUR_TURN");
         sendMsg(waiting, "WAITING");
@@ -130,7 +131,7 @@ int main(){
         }
 
         int pos = -1;
-        if(msg.substr(0,5) == "MOVE"){
+        if(msg.substr(0,4) == "MOVE"){
             pos=stoi(msg.substr(5));
         }
 
@@ -139,9 +140,33 @@ int main(){
             continue;
         }
 
-        applyMove(pos, symbols[turn]);
+        applyMove(pos, symbols[turn?0:1]);
+
+        sendMsg(client1, "BOARD " + boardToString());
+        sendMsg(client2, "BOARD " + boardToString());
+
+        char gameState = checkGameWon();
+        if (gameState != '\0') {
+            if (gameState == 'D') {
+                sendMsg(client1, "RESULT DRAW");
+                sendMsg(client2, "RESULT DRAW");
+            } else {
+                sendMsg(client1, std::string("RESULT WIN ") + gameState);
+                sendMsg(client2, std::string("RESULT WIN ") + gameState);
+            }
+            break;
+        }
+
+        
+        turn=!turn;
+
 
     }
 
+    closesocket(client1);
+    closesocket(client2);
+    closesocket(ListenSocket);
+    WSACleanup();
+    std::cout << "Game over. Server shutting down.\n";
     return 0;
 }
