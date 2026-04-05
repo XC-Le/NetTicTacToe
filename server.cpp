@@ -1,10 +1,13 @@
 // ============================================
-// Names:       Xavier Le, Gabe Gordon
-// Course:      CS370-01Y | Spring 2026
-// Project:     NetTicTacToe - Server
-// Description: Accepts 2 client connections and manages game state, 
-//              turn order, and win detection for an online Tic-Tac-Toe game.
-// Due Date:    April 7, 2026
+// Names:           Xavier Le, Gabe Gordon
+// Course:          CS370-01Y | Spring 2026
+// Project:         NetTicTacToe - Server
+// Description:     Accepts 2 client connections and manages game state, 
+//                  turn order, and win detection for an online Tic-Tac-Toe game.
+//
+// Instructions:    Compile file with 'g++ -o server server.cpp -lws2_32' and 
+//                  then run './server' before compiling and running the client
+// Due Date:        April 7, 2026
 // ============================================
 
 #include <iostream>
@@ -55,6 +58,22 @@ string receiveMsg(SOCKET sock){
     return string(buf, bytes);
 }
 
+char checkGameWon(){
+    int winConditions[8][3] = {{0,1,2}, {3,4,5}, {6,7,8}, {0,3,6}, {1,4,7}, {2,5,8}, {0,4,8}, {6,4,2}};
+
+    for(auto& w : winConditions){
+        if(board[w[0]] != ' ' &&
+        board[w[0]] == board[w[1]] &&
+        board[w[1]] == board[w[2]])
+        return board[w[0]];
+    }
+
+    for(int i=0;i<9;i++){
+        if(board[i] == ' ')return '\0';
+    }
+
+    return 'D';
+}
 
 int main(){
     // initializes WinSock
@@ -82,13 +101,72 @@ int main(){
     listen(ListenSocket, 2);
 
 
-    SOCKET ClientSocket1 = accept(ListenSocket, nullptr, nullptr);
+    SOCKET client1 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 1 connected"<<endl;
-    sendMsg(ClientSocket1, "Welcome Player 1");
+    sendMsg(client1, "WELCOME X");
 
-    SOCKET ClientSocket2 = accept(ListenSocket, nullptr, nullptr);
+    SOCKET client2 = accept(ListenSocket, nullptr, nullptr);
     cout<<"Player 2 connected"<<endl;
-    sendMsg(ClientSocket2, "Welcome Player 2");
+    sendMsg(client2, "WELCOME O");
 
+    SOCKET clients[2] = {client1, client2};
+    char symbols[2] = {'X', 'O'};
+
+    initBoard();
+    sendMsg(client1, "BOARD " + boardToString());
+    sendMsg(client2, "BOARD " + boardToString());
+
+    bool turn = true;
+    while(true){
+        SOCKET current = clients[turn?0:1];
+        SOCKET waiting = clients[turn?1:0];
+
+        sendMsg(current, "YOUR_TURN");
+        sendMsg(waiting, "WAITING");
+
+        string msg = receiveMsg(current);
+        if(msg.empty()){
+            cout<<"Player disconected"<<endl;
+            break;
+        }
+
+        int pos = -1;
+        if(msg.substr(0,4) == "MOVE"){
+            pos=stoi(msg.substr(5));
+        }
+
+        if(!isValidMove(pos)){
+            sendMsg(current, "INVALID");
+            continue;
+        }
+
+        applyMove(pos, symbols[turn?0:1]);
+
+        sendMsg(client1, "BOARD " + boardToString());
+        sendMsg(client2, "BOARD " + boardToString());
+
+        char gameState = checkGameWon();
+        if (gameState != '\0') {
+            if (gameState == 'D') {
+                sendMsg(client1, "RESULT DRAW");
+                sendMsg(client2, "RESULT DRAW");
+            } else {
+                sendMsg(client1, std::string("RESULT WIN ") + gameState);
+                sendMsg(client2, std::string("RESULT WIN ") + gameState);
+            }
+            break;
+        }
+
+        
+        turn=!turn;
+
+
+    }
+
+    closesocket(client1);
+    closesocket(client2);
+    closesocket(ListenSocket);
+    WSACleanup();
+    std::cout << "Game over. Server shutting down.\n";
     return 0;
 }

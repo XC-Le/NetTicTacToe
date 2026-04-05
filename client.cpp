@@ -1,10 +1,13 @@
 // ============================================
-// Names:       Xavier Le, Gabe Gordon
-// Course:      CS370-01Y | Spring 2026
-// Project:     NetTicTacToe - Client
-// Description: Connects to the server, displays the board, and 
-//              handles player input for a networked Tic-Tac-Toe game.
-// Due Date:    April 7, 2026
+// Names:           Xavier Le, Gabe Gordon
+// Course:          CS370-01Y | Spring 2026
+// Project:         NetTicTacToe - Client
+// Description:     Connects to the server, displays the board, and 
+//                  handles player input for a networked Tic-Tac-Toe game.
+//
+// Instructions:    Compile file with 'g++ -o client client.cpp -lws2_32'
+//                  and then run './client' after compiling running the server.
+// Due Date:        April 7, 2026
 // ============================================
 
 #include <iostream>
@@ -26,8 +29,8 @@ void printBoard() {
     cout << "\n";
     for (int i = 0; i < 9; i++) {
         char c = board[i];
-        if (c == '1') cout << " X ";
-        else if (c == '2') cout << " O ";
+        if (c == 'X') cout << " X ";
+        else if (c == 'O') cout << " O ";
         else cout << " " << i << " "; 
 
         if (i % 3 != 2) cout << "|";
@@ -85,12 +88,51 @@ int main(){
             break;
         }
 
-        if(msg.substr(0,7)=="Welcome"){
-            mySymbol = msg[15];
-            cout<<"You are player "<<mySymbol;
-            cout<<" ("<<(mySymbol == '1'?"X":"O")<<")"<<endl;
+        if(msg.substr(0,7) == "WELCOME"){
+            mySymbol = msg[8];
+            cout<<"You are player "<<(msg[8]=='X'?'1':'2');
+            cout<<" ("<<mySymbol<<")"<<endl;
+        }
+
+        else if(msg.substr(0, 5) == "BOARD"){
+            string state = msg.substr(6,15);
+            for(int i=0;i<9;i++){
+                board[i]=state[i];
+            }
+            printBoard();
+        }
+
+        else if(msg.substr(0, 9) == "YOUR_TURN"){
+            int pos = -1;
+            while(true){
+                cout<<"Your move (0-8): ";
+                cin>>pos;
+                if(pos>=0 || pos<=8)break; 
+                cout<<"Invalid input. Enter a number 0-8.\n";
+            }
+            sendMsg(sock, "MOVE " + to_string(pos));
+        }
+
+        else if(msg == "INVALID"){
+            cout<<"That square is taken! Try again."<<endl;
+        }
+
+        else if(msg == "WAITING"){
+            cout<<"Waiting for opponent's turn."<<endl;
+        }
+
+        else if(msg.substr(0,6) == "RESULT"){
+            if(msg=="RESULT DRAW") cout<<"Draw!"<<endl; 
+            else{
+                char winner = msg[11];
+                if(winner == mySymbol)cout<<"YOU WON!"<<endl;
+                else cout<<"YOU LOST!"<<endl;
+            }
+            break;
         }
     }
 
+    closesocket(sock);
+    WSACleanup();
     return 0;   
 }
