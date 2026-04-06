@@ -47,7 +47,10 @@ void applyMove(int pos, char symbol){
 
 // sends a message to client based off sock
 void sendMsg(SOCKET sock, const string& msg){
-    send(sock, msg.c_str(), (int) msg.size(), 0);
+    if (send(sock, msg.c_str(), (int) msg.size(), 0) != msg.size()) {
+        cout<<"Issue sending message."<<endl;
+        exit(1);
+    }
 }
 
 // receives a message from sock
@@ -97,15 +100,28 @@ int main(){
     addr.sin_addr.s_addr = INADDR_ANY;
     addr.sin_port = htons(PORT);
 
-    bind(ListenSocket, (sockaddr*)&addr, sizeof(addr));
-    listen(ListenSocket, 2);
+    if (bind(ListenSocket, (sockaddr*)&addr, sizeof(addr))) {
+        cout<<"Failed to bind"<<endl;
+        return 1;
+    }
+    if (listen(ListenSocket, 2)) {
+        cout<<"Failed to listen"<<endl;
+        return 1;
+    }
 
 
     SOCKET client1 = accept(ListenSocket, nullptr, nullptr);
+    if (client1 == INVALID_SOCKET) {
+        cout<<"Failed to accept"<<endl;
+        return 1;
+    }
     cout<<"Player 1 connected"<<endl;
     sendMsg(client1, "WELCOME X");
-
     SOCKET client2 = accept(ListenSocket, nullptr, nullptr);
+    if (client2 == INVALID_SOCKET) {
+        cout<<"Failed to accept"<<endl;
+        return 1;
+    }
     cout<<"Player 2 connected"<<endl;
     sendMsg(client2, "WELCOME O");
 

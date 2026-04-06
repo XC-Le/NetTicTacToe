@@ -41,7 +41,10 @@ void printBoard() {
 
 // sends a message to client based off sock
 void sendMsg(SOCKET sock, const string& msg){
-    send(sock, msg.c_str(), (int) msg.size(), 0);
+    if (send(sock, msg.c_str(), (int) msg.size(), 0) != msg.size()) {
+        cout<<"Issue sending message."<<endl;
+        exit(1);
+    }
 }
 
 // receives a message from sock
@@ -84,7 +87,7 @@ int main(){
     while(true){
         string msg = receiveMsg(sock);
         if(msg.empty()){
-            cout<<"Server disconected"<<endl;
+            cout<<"Server disconnected"<<endl;
             break;
         }
 
@@ -95,7 +98,7 @@ int main(){
         }
 
         else if(msg.substr(0, 5) == "BOARD"){
-            string state = msg.substr(6,15);
+            string state = msg.substr(6,9);
             for(int i=0;i<9;i++){
                 board[i]=state[i];
             }
@@ -106,8 +109,13 @@ int main(){
             int pos = -1;
             while(true){
                 cout<<"Your move (0-8): ";
-                cin>>pos;
-                if(pos>=0 || pos<=8)break; 
+                if(!(cin>>pos)) {
+                    cin.clear();
+                    cin.ignore(INT_MAX, '\n');
+                    cout<<"Invalid input. Enter a number 0-8.\n";
+                    continue;
+                }
+                if(pos>=0 && pos<=8)break; 
                 cout<<"Invalid input. Enter a number 0-8.\n";
             }
             sendMsg(sock, "MOVE " + to_string(pos));
